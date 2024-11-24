@@ -1,3 +1,7 @@
 streamlit
 arize-phoenix-otel
 openinference-instrumentation-openai
+langgraph
+langchain_openai
+langchain_community
+langchain_core
