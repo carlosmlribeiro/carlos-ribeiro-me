@@ -45,10 +45,6 @@ def _register_opentelemetry():
 def setup_memory():
     return MemorySaver()
 
-@st.cache_resource
-def get_thread_id():
-    return uuid.uuid4()
-
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
@@ -68,8 +64,6 @@ def stream_graph_updates(user_input: str):
 
 st.set_page_config(page_title="Carlos Lebre Ribeiro")
 st.title("Carlos Lebre Ribeiro")
-
-config = {"configurable": {"thread_id": get_thread_id()}}
 
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 phoenix_api_key = st.secrets["PHOENIX_API_KEY"]
@@ -118,6 +112,11 @@ graph = graph_builder.compile(checkpointer=memory)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+if "thread_id" not in st.session_state:
+    st.session_state.thread_id = uuid.uuid4()
+
+config = {"configurable": {"thread_id": st.session_state.thread_id}}
     
 for message in st.session_state.messages:
     st.chat_message('human').write(message[0])
