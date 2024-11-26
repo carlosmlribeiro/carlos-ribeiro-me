@@ -16,21 +16,27 @@ from typing import Annotated
 from typing_extensions import TypedDict
 
 from openinference.instrumentation.openai import OpenAIInstrumentor
+from openinference.instrumentation import using_prompt_template
 from phoenix.otel import register
 
 SYSTEM_PROMPT = """You are my digital twin, designed to represent my professional experience and projects accurately. You possess a deep understanding of my skills, achievements, and the nuances of my work style, allowing you to communicate effectively on my behalf.
 
-Your task is to answer questions about my professional background and the projects I have been involved in, nothing else. If the user is interested in working with me, please try to have them check my LinkedIn profile at: http://linkedin/in/carlosmlribeiro. Be polite. Keep your responses detailed and reflective of my experiences, ensuring clarity and accuracy in every answer.
+Your task is to understand if you are talking to a potential customer and get them to set a meeting with me via the Calendly link: https://calendly.com/carlosmlribeiro/30min Engage with the potential customer by answering questions about my professional background and the projects I have been involved in, nothing else. 
+
+You can use the tool to search more information about the companies I've worked or details about the certifications I possess, or other details about my profile. If the user doesn't want to set up a meeting please try to have them following me in my LinkedIn profile at: http://linkedin/in/carlosmlribeiro. Be polite. Keep your responses detailed and reflective of my experiences, ensuring clarity and accuracy in every answer.
 
 Summary of profile:
 - Name: Carlos Lebre Ribeiro
+- Personal facts: Married to Raquel, father of two girls, Carminho and Rosarinho. Pet owner of a french bulldog named Jack Sparrow.
 - Summary: AI Engineering Leader with 15+ years of experience delivering high-impact AI/ML-driven solutions across enterprise and scale-up environments. Proven expertise in designing, developing, and managing mission-critical systems that meet evolving business requirements. Demonstrated ability to scale engineering teams, innovate with cutting-edge technologies (e.g., Generative AI), and maintain system reliability. Skilled in building collaborative, zero-attrition teams and fostering a culture of intrinsic motivation and continuous improvement.
 - Companies where I've worked (by order of importance): Talkdesk, Feedzai, European Commission, Vodafone, Celfocus
 - Key Achievements: Spearheaded the AI Unit for Talkdesk's CCaaS platform, growing the team from 10 to 100 engineers and expanding product lines from 4 to 16 within two years. Managed a global team of project managers across the US, EMEA, and APAC regions to deliver Feedzai’s AI-powered fraud detection system, on time and within budget. Led the European Commission’s first deployment of AWS and Azure cloud infrastructure for various departments, enabling scalable and secure cloud solutions.
 - Skills: Technical Leadership: Team scaling, cross-functional collaboration, AI platform development; AI/ML Expertise: Generative AI, real-time fraud detection, AI-driven customer solutions; Cloud Technologies: AWS, Azure, turn-key cloud deployment; Project Management: Agile frameworks, global team management, PMO leadership; Process Optimization: Workflow automation, SLO adherence, budget management
 - Certifications: Flight Levels Systems Architecture; Management 3.0 Fundamentals; ITILv4 Foundation Level; ICAgile Certified Professional - Agile Coaching; Team Kanban Practitioner Certified Scrum Product Owner; Certified ScrumMaster; Scrum Fundamentals Certified (SFC); Certified Project Management Professional - PMI
 
-When answering questions, ensure you highlight the most relevant aspects of my experience."""
+When answering questions, ensure you highlight the most relevant aspects of my experience. Try always to achieve one of the two outcomes: meeting or profile follower"""
+
+SYSTEM_PROMPT_VERSION = "v1.1"
 
 @st.cache_resource
 def _register_opentelemetry():
@@ -49,9 +55,12 @@ class State(TypedDict):
     messages: Annotated[list, add_messages]
 
 def chatbot(state: State):
-    if(len(state["messages"])) == 1:
-       state["messages"].insert(0,SystemMessage(content=SYSTEM_PROMPT)) 
-    return {"messages": [llm_with_tools.invoke(state["messages"])]}
+    with using_prompt_template(
+        version=SYSTEM_PROMPT_VERSION,
+    ):
+        if(len(state["messages"])) == 1:
+            state["messages"].insert(0,SystemMessage(content=SYSTEM_PROMPT)) 
+        return {"messages": [llm_with_tools.invoke(state["messages"])]}
 
 def stream_graph_updates(user_input: str):
     events = graph.stream({"messages": [("human", user_input)]}, config, stream_mode="values")
@@ -64,6 +73,7 @@ def stream_graph_updates(user_input: str):
 
 st.set_page_config(page_title="Carlos Lebre Ribeiro")
 st.title("Carlos Lebre Ribeiro")
+st.write("My digital twin is here to answer questions about my professional experience. Let him know if you liked it, I'll ask him later!")
 
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 phoenix_api_key = st.secrets["PHOENIX_API_KEY"]
