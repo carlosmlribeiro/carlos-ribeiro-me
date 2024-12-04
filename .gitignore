@@ -1,1 +1,7 @@
-secrets.toml
+.streamlit
+.pytest_cache
+.vscode
+app.egg-info
+venv
+.DS_Store
+*.pyc
