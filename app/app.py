@@ -22,6 +22,7 @@ from phoenix.otel import register
 try:
     SYSTEM_PROMPT = st.secrets["SYSTEM_PROMPT"]
     SYSTEM_PROMPT_VERSION = st.secrets["SYSTEM_PROMPT_VERSION"]
+    INDEX_NAME = st.secrets["INDEX_NAME"]
 except KeyError as e:
     st.error(f"Missing required secret: {e}. Please configure all required secrets in your .streamlit/secrets.toml file.")
     raise
@@ -30,7 +31,7 @@ except KeyError as e:
 def _register_opentelemetry():
 
     tracer_provider = register(
-    project_name="carlos-ribeiro",
+    project_name=INDEX_NAME,
     endpoint="https://app.phoenix.arize.com/v1/traces",
     )
     OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
