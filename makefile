@@ -7,12 +7,20 @@ STREAMLIT = $(VENV_DIR)/bin/streamlit
 PYTEST = $(VENV_DIR)/bin/pytest
 
 # Ensure virtual environment exists and dependencies are installed
+# Check Python version at the top of the file
+MIN_PYTHON_VERSION = 3.8
+PYTHON_VERSION_CHECK = $(shell $(PYTHON) -c "import sys; exit(0) if sys.version_info >= ($(MIN_PYTHON_VERSION),) else exit(1)" 2>/dev/null || echo fail)
+
 $(VENV_DIR)/bin/activate: requirements.txt
+ifneq ($(PYTHON_VERSION_CHECK),fail)
 	$(PYTHON) -m venv $(VENV_DIR)
-	. $(VENV_DIR)/bin/activate && $(PIP) install --upgrade pip
-	. $(VENV_DIR)/bin/activate && $(PIP) install -r requirements.txt
-	. $(VENV_DIR)/bin/activate && $(PIP) install -e .
+	$(VENV_DIR)/bin/pip install --upgrade pip
+	$(VENV_DIR)/bin/pip install -r requirements.txt
+	$(VENV_DIR)/bin/pip install -e .
 	touch $(VENV_DIR)/bin/activate
+else
+	$(error "Python $(MIN_PYTHON_VERSION) or later is required.")
+endif
 
 # Create a virtual environment and install dependencies
 .PHONY: build
