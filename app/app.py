@@ -19,8 +19,12 @@ from openinference.instrumentation.openai import OpenAIInstrumentor
 from openinference.instrumentation import using_prompt_template
 from phoenix.otel import register
 
-SYSTEM_PROMPT = st.secrets["SYSTEM_PROMPT"]
-SYSTEM_PROMPT_VERSION = st.secrets["SYSTEM_PROMPT_VERSION"]
+try:
+    SYSTEM_PROMPT = st.secrets["SYSTEM_PROMPT"]
+    SYSTEM_PROMPT_VERSION = st.secrets["SYSTEM_PROMPT_VERSION"]
+except KeyError as e:
+    st.error(f"Missing required secret: {e}. Please configure all required secrets in your .streamlit/secrets.toml file.")
+    raise
 
 @st.cache_resource
 def _register_opentelemetry():
